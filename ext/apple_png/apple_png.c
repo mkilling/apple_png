@@ -195,7 +195,13 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
     return APPLE_PNG_OK;
 }
 
-/* convert an apple png data string to a standard png data string */
+/*
+@!visibility protected
+Convert an Apple PNG data string to a standard PNG data string
+@note This sets #width and #height on the ApplePng instance as a side effect
+@param data [String] Binary string containing Apple PNG data
+@return [String] Binary string containing standard PNG data
+*/
 static VALUE ApplePng_convert_apple_png(VALUE self, VALUE data) {
     int error;
     VALUE ret;
@@ -229,7 +235,12 @@ static VALUE ApplePng_convert_apple_png(VALUE self, VALUE data) {
     return ret;
 }
 
-/* this is a quick way to get the width and height from png data without converting the file */
+/*
+@!visibility protected
+Get the width and height from PNG data without actually converting it.
+@note This sets #width and #height on the ApplePng instance.
+@param data [String] Binary string containing Apple PNG data
+*/
 static VALUE ApplePng_get_dimensions(VALUE self, VALUE data) {
     const char *oldPNG = StringValuePtr(data);
     size_t oldPNG_length = RSTRING_LEN(data);
