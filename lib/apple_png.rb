@@ -11,6 +11,7 @@ class ApplePng
   def data
     if @data.nil?
       @data = self.convert_apple_png(@raw_data)
+      @raw_data = nil
     end
     return @data
   end
