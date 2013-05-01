@@ -1,4 +1,4 @@
-# apple_png [![Build Status](https://travis-ci.org/mkilling/apple_png.png?branch=master)](https://travis-ci.org/mkilling/apple_png)
+# apple_png [![Build Status](https://travis-ci.org/mkilling/apple_png.png?branch=master)](https://travis-ci.org/mkilling/apple_png) [![Gem Version](https://badge.fury.io/rb/apple_png.png)](http://badge.fury.io/rb/apple_png)
 
 by Marvin Killing
 
