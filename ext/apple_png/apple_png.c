@@ -260,6 +260,6 @@ static VALUE ApplePng_get_dimensions(VALUE self, VALUE data) {
 
 void Init_apple_png(void) {
   VALUE klass = rb_define_class("ApplePng", rb_cObject);
-  rb_define_method(klass, "convert_apple_png", ApplePng_convert_apple_png, 1);
-  rb_define_method(klass, "get_dimensions", ApplePng_get_dimensions, 1);
+  rb_define_protected_method(klass, "convert_apple_png", ApplePng_convert_apple_png, 1);
+  rb_define_protected_method(klass, "get_dimensions", ApplePng_get_dimensions, 1);
 }
