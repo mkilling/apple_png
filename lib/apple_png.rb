@@ -1,5 +1,7 @@
 require 'apple_png/apple_png'
 
+class NotValidApplePngError < StandardError; end
+
 class ApplePng
   attr_accessor :width, :height
 

@@ -32,8 +32,17 @@ class ApplePngTest < Test::Unit::TestCase
   end
 
   def test_it_raises_on_invalid_input
-    assert_raise ArgumentError do
+    assert_raise NotValidApplePngError do
       png_file = ApplePng.new("xyz")
+    end
+  end
+
+  def test_it_raises_if_input_can_not_be_parsed
+    File.open('test/canabalt.png', 'rb') do |f|
+      png = ApplePng.new(f.read)
+      assert_raise NotValidApplePngError do
+        png.data
+      end
     end
   end
 end

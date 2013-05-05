@@ -220,11 +220,14 @@ static VALUE ApplePng_convert_apple_png(VALUE self, VALUE data) {
         switch (error) {
         case APPLE_PNG_STREAM_ERROR:
         case APPLE_PNG_DATA_ERROR:
-            rb_raise(rb_eArgError, "Could not process the input data. Please make sure this is valid Apple PNG format data.");
+        {
+            VALUE eNotValidApplePng = rb_path2class("NotValidApplePngError");
+            rb_raise(eNotValidApplePng, "Could not process the input data. Please make sure this is valid Apple PNG format data.");
+        }
         case APPLE_PNG_ZLIB_VERSION_ERROR:
-            rb_raise(rb_eArgError, "Unexpected Zlib version encountered. The caller was expecting Zlib " ZLIB_VERSION ".");
+            rb_raise(rb_eStandardError, "Unexpected Zlib version encountered. The caller was expecting Zlib " ZLIB_VERSION ".");
         case APPLE_PNG_NO_MEM_ERROR:
-            rb_raise(rb_eArgError, "Ran out of memory while processing the PNG data.");
+            rb_raise(rb_eNoMemError, "Ran out of memory while processing the PNG data.");
         default:
             rb_raise(rb_eStandardError, "An unexpected error was encountered while processing the PNG data. Please make sure the input is valid Apple PNG format data.");
         }
@@ -242,13 +245,14 @@ Get the width and height from PNG data without actually converting it.
 @param data [String] Binary string containing Apple PNG data
 */
 static VALUE ApplePng_get_dimensions(VALUE self, VALUE data) {
+    VALUE eNotValidApplePng = rb_path2class("NotValidApplePngError");
     const char *oldPNG = StringValuePtr(data);
     size_t oldPNG_length = RSTRING_LEN(data);
     size_t cursor = 8;
 
     /* check whether this is actually a png file */
     if (strncmp(PNG_HEADER, oldPNG, 8) != 0) {
-        rb_raise(rb_eArgError, "Input data is not a valid PNG file (missing the PNG magic bytes).");
+        rb_raise(eNotValidApplePng, "Input data is not a valid PNG file (missing the PNG magic bytes).");
     }
 
     while (cursor < oldPNG_length) {
@@ -266,7 +270,7 @@ static VALUE ApplePng_get_dimensions(VALUE self, VALUE data) {
         }
     }
 
-    rb_raise(rb_eArgError, "Input data is not a valid PNG file (missing IHDR chunk).");
+    rb_raise(eNotValidApplePng, "Input data is not a valid PNG file (missing IHDR chunk).");
 }
 
 void Init_apple_png(void) {
