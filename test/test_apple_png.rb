@@ -37,12 +37,13 @@ class ApplePngTest < Test::Unit::TestCase
     end
   end
 
-  def test_it_raises_if_input_can_not_be_parsed
+  def test_it_raises_if_input_can_not_be_parsed_and_raw_data_can_still_be_accessed
     File.open('test/canabalt.png', 'rb') do |f|
       png = ApplePng.new(f.read)
       assert_raise NotValidApplePngError do
         png.data
       end
+      assert_not_nil png.raw_data
     end
   end
 end
