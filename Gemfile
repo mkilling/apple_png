@@ -1,8 +1,8 @@
 source "https://rubygems.org"
 
 group :development do
-  gem "rake"
-  gem "rake-compiler"
-  gem "redcarpet"
-  gem "yard"
+  gem "rake", "~> 10.0.4"
+  gem "rake-compiler", "~> 0.8.3"
+  gem "redcarpet", "~> 2.2.2"
+  gem "yard", "~> 0.8.6.1"
 end
