@@ -6,18 +6,54 @@
 #define PNG_HEADER "\x89PNG\r\n\x1a\n"
 #define PNG_BYTES2UINT(char_ptr) (ntohl(*(uint32_t *)(char_ptr)))
 
+#define DIV_CEIL(a,b) (((a) + (b) - 1) / (b))
+
 #define APPLE_PNG_OK 0
 #define APPLE_PNG_STREAM_ERROR Z_STREAM_ERROR
 #define APPLE_PNG_DATA_ERROR Z_DATA_ERROR
 #define APPLE_PNG_ZLIB_VERSION_ERROR Z_VERSION_ERROR
 #define APPLE_PNG_NO_MEM_ERROR Z_MEM_ERROR
 
+/* calculate how many scanlines an adam7 interlaced png will result in */
+static uint32_t interlaced_count_scanlines(uint32_t width, uint32_t height) {
+    uint32_t pass[7];
+
+    if (width == 0 || height == 0) return 0;
+
+    /* For each pass, calculate how many resulting scanlines there will be.
+     * I'm sure there is a more elegant solution to accomplish this.
+     * This makes use of the adam7 raster:
+     * 1 6 4 6 2 6 4 6
+     * 7 7 7 7 7 7 7 7
+     * 5 6 5 6 5 6 5 6
+     * 7 7 7 7 7 7 7 7
+     * 3 6 4 6 3 6 4 6
+     * 7 7 7 7 7 7 7 7
+     * 5 6 5 6 5 6 5 6
+     * 7 7 7 7 7 7 7 7
+    */
+    pass[0] = DIV_CEIL(height, 8u);
+    pass[1] = (width > 4) ? DIV_CEIL(height, 8u) : 0;
+    pass[2] = DIV_CEIL(height-4, 8u);
+    pass[3] = (width > 2) ? DIV_CEIL(height, 4u) : 0;
+    pass[4] = DIV_CEIL(height-2, 4u);
+    pass[5] = (width > 1) ? DIV_CEIL(height, 2u) : 0;
+    pass[6] = DIV_CEIL(height-1, 2u);
+
+    return pass[0] + pass[1] + pass[2] + pass[3] + pass[4] + pass[5] + pass[6];
+}
+
 /* inflate from apple png file, don't expect headers */
-static int png_inflate(unsigned char *data, uint32_t length, uint32_t width, uint32_t height, unsigned char **out_buff, uint32_t *out_uncompressed_size) {
+static int png_inflate(unsigned char *data, uint32_t length, uint32_t width, uint32_t height, int interlaced, unsigned char **out_buff, uint32_t *out_uncompressed_size) {
     int error;
     z_stream inflate_strm = {0};
 
-    *out_uncompressed_size = height + width * height * 4;
+    if (interlaced) {
+        *out_uncompressed_size = interlaced_count_scanlines(width, height) + width * height * 4;
+    } else {
+        *out_uncompressed_size = height + width * height * 4;
+    }
+
     *out_buff = malloc(sizeof(char) * (*out_uncompressed_size));
     if (*out_buff == 0) {
         return APPLE_PNG_NO_MEM_ERROR;
@@ -114,6 +150,7 @@ static uint32_t png_crc32(const char *chunkType, const char *chunkData, uint32_t
 /* extract chunks from PNG data */
 static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dyn_arr *newPNG) {
     uint32_t width = 0, height = 0;
+    int interlaced = 0;
     size_t cursor = 8;
     dyn_arr *applePngCompressedPixelData = dyn_arr_create(oldPngLength);
     if (applePngCompressedPixelData == 0) {
@@ -133,6 +170,7 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
             /* extract dimensions from header */
             width = PNG_BYTES2UINT(&chunkData[0]);
             height = PNG_BYTES2UINT(&chunkData[4]);
+            interlaced = chunkData[12] == 1;
             rb_funcall(self, rb_intern("width="), 1, INT2NUM(width));
             rb_funcall(self, rb_intern("height="), 1, INT2NUM(height));
         } else if (strncmp(chunkType, "IDAT", 4) == 0) {
@@ -151,7 +189,7 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
             int error;
 
             /* decompress, flip color bytes, then compress again */
-            error = png_inflate((unsigned char *)applePngCompressedPixelData->arr, (uint32_t)applePngCompressedPixelData->used, width, height, &decompressedPixelData, &uncompressed_size);
+            error = png_inflate((unsigned char *)applePngCompressedPixelData->arr, (uint32_t)applePngCompressedPixelData->used, width, height, interlaced, &decompressedPixelData, &uncompressed_size);
             if (error != APPLE_PNG_OK) {
                 dyn_arr_free(applePngCompressedPixelData);
                 return error;
