@@ -123,6 +123,12 @@ static int png_deflate(unsigned char *data, uint32_t length, unsigned char **out
     return APPLE_PNG_OK;
 }
 
+static void flip_colors(unsigned char *pixelData, size_t index) {
+    char tmp = pixelData[index];
+    pixelData[index] = pixelData[index + 2];
+    pixelData[index + 2] = tmp;
+}
+
 /* flip first and third color in uncompressed png pixel data */
 static void flip_color_bytes(unsigned char *pixelData, uint32_t width, uint32_t height) {
     uint32_t x, y;
@@ -131,9 +137,75 @@ static void flip_color_bytes(unsigned char *pixelData, uint32_t width, uint32_t 
     for (y = 0; y < height; y++) {
         i += 1;
         for (x = 0; x < width; x++) {
-            char tmp = pixelData[i];
-            pixelData[i] = pixelData[i + 2];
-            pixelData[i + 2] = tmp;
+            flip_colors(pixelData, i);
+            i += 4;
+        }
+    }
+}
+
+static void interlaced_flip_color_bytes(unsigned char *pixelData, uint32_t width, uint32_t height) {
+    uint32_t x, y;
+    size_t i = 0;
+
+    // pass 1
+    for (y = 0; y < height; y += 8) {
+        i += 1;
+        for (x = 0; x < width; x += 8) {
+            flip_colors(pixelData, i);
+            i += 4;
+        }
+    }
+
+    // pass 2
+    for (y = 0; y < height; y += 8) {
+        i += 1;
+        for (x = 5; x < width; x += 8) {
+            flip_colors(pixelData, i);
+            i += 4;
+        }
+    }
+
+    // pass 3
+    for (y = 4; y < height; y += 8) {
+        i += 1;
+        for (x = 0; x < width; x += 4) {
+            flip_colors(pixelData, i);
+            i += 4;
+        }
+    }
+
+    // pass 4
+    for (y = 0; y < height; y += 4) {
+        i += 1;
+        for (x = 2; x < width; x += 4) {
+            flip_colors(pixelData, i);
+            i += 4;
+        }
+    }
+
+    // pass 5
+    for (y = 2; y < height; y += 4) {
+        i += 1;
+        for (x = 0; x < width; x += 2) {
+            flip_colors(pixelData, i);
+            i += 4;
+        }
+    }
+
+    // pass 6
+    for (y = 0; y < height; y += 2) {
+        i += 1;
+        for (x = 1; x < width; x += 2) {
+            flip_colors(pixelData, i);
+            i += 4;
+        }
+    }
+
+    // pass 7
+    for (y = 1; y < height; y += 2) {
+        i += 1;
+        for (x = 0; x < width; x++) {
+            flip_colors(pixelData, i);
             i += 4;
         }
     }
@@ -194,7 +266,13 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
                 dyn_arr_free(applePngCompressedPixelData);
                 return error;
             }
-            flip_color_bytes(decompressedPixelData, width, height);
+
+            if (interlaced) {
+                interlaced_flip_color_bytes(decompressedPixelData, width, height);
+            } else {
+                flip_color_bytes(decompressedPixelData, width, height);
+            }
+
             error = png_deflate(decompressedPixelData, uncompressed_size, &standardPngCompressedPixelData, &compressed_size);
             if (error != APPLE_PNG_OK) {
                 dyn_arr_free(applePngCompressedPixelData);
