@@ -331,6 +331,10 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
         dyn_arr_append(newPNG, chunkCRC_raw, 4);
 
         if (breakLoop) {
+            // end with an IEND chunk
+            dyn_arr_append(newPNG, "\x00\x00\x00\x00", 4);
+            dyn_arr_append(newPNG, "IEND", 4);
+            dyn_arr_append(newPNG, "\xAE\x42\x60\x82", 4); // this is the checksum for all IEND chunks
             break;
         }
     }
