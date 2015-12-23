@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'apple_png'
-  s.version     = '0.1.3'
-  s.date        = '2013-04-17'
+  s.version     = '0.2.0'
+  s.date        = '2015-12-23'
   s.summary     = "Converts the Apple PNG format to standard PNG"
   s.description = "Converts the Apple PNG format used in iOS packages to standard PNG"
   s.authors     = ["Marvin Killing"]
