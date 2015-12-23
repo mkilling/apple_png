@@ -14,6 +14,24 @@
 #define APPLE_PNG_ZLIB_VERSION_ERROR Z_VERSION_ERROR
 #define APPLE_PNG_NO_MEM_ERROR Z_MEM_ERROR
 
+#define N_VALID_CHUNK_NAMES 14
+static const char *VALID_CHUNK_NAMES[] = {
+    "IHDR",
+    "PLTE",
+    "IDAT",
+    "IEND",
+    "cHRM",
+    "gAMA",
+    "sBIT",
+    "bKGD",
+    "hIST",
+    "tRNS",
+    "pHYs",
+    "tIME",
+    "tEXt",
+    "zTXt"
+};
+
 /* calculate how many scanlines an adam7 interlaced png will result in */
 static uint32_t interlaced_count_scanlines(uint32_t width, uint32_t height) {
     uint32_t pass[7];
@@ -238,7 +256,18 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
         const char *chunkCRC_raw = &oldPNG[cursor + 8 + chunkLength];
         cursor += chunkLength + 12;
 
-        if (strncmp(chunkType, "IHDR", 4) == 0) {
+        int isValidChunkName = 0;
+        for (unsigned int i = 0; i < N_VALID_CHUNK_NAMES; i++) {
+            if (strncmp(chunkType, VALID_CHUNK_NAMES[i], 4) == 0) {
+                isValidChunkName = 1;
+                break;
+            }
+        }
+
+        if (!isValidChunkName) {
+            /* filter out Apple-specific chunks such as CgBI and iDOT */
+            continue;
+        } else if (strncmp(chunkType, "IHDR", 4) == 0) {
             /* extract dimensions from header */
             width = PNG_BYTES2UINT(&chunkData[0]);
             height = PNG_BYTES2UINT(&chunkData[4]);
@@ -248,9 +277,6 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
         } else if (strncmp(chunkType, "IDAT", 4) == 0) {
             /* collect pixel data to process it once an IEND chunk appears */
             dyn_arr_append(applePngCompressedPixelData, chunkData, chunkLength);
-            continue;
-        } else if (strncmp(chunkType, "CgBI", 4) == 0) {
-            /* don't write CgBI chunks to the output png  */
             continue;
         } else if (strncmp(chunkType, "IEND", 4) == 0) {
             /* all png data has been procssed, now flip the color bytes */
