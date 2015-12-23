@@ -1,7 +1,7 @@
-require 'test/unit'
+require 'minitest/autorun'
 require 'apple_png'
 
-class ApplePngTest < Test::Unit::TestCase
+class ApplePngTest < Minitest::Test
   def test_it_converts_apple_png_files_to_standard_png_files
     data = File.open('test/icon.apple.png', 'rb') do |f|
       f.read()
@@ -32,7 +32,7 @@ class ApplePngTest < Test::Unit::TestCase
   end
 
   def test_it_raises_on_invalid_input
-    assert_raise NotValidApplePngError do
+    assert_raises NotValidApplePngError do
       png_file = ApplePng.new("xyz")
     end
   end
@@ -40,10 +40,16 @@ class ApplePngTest < Test::Unit::TestCase
   def test_it_raises_if_input_can_not_be_parsed_and_raw_data_can_still_be_accessed
     File.open('test/canabalt.png', 'rb') do |f|
       png = ApplePng.new(f.read)
-      assert_raise NotValidApplePngError do
+      assert_raises NotValidApplePngError do
         png.data
       end
-      assert_not_nil png.raw_data
+      refute_nil png.raw_data
+    end
+  end
+
+  def test_it_raises_when_null
+    assert_raises TypeError do
+      ApplePng.new(nil).data
     end
   end
 end

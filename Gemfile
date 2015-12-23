@@ -5,4 +5,5 @@ group :development do
   gem "rake-compiler", "~> 0.8.3"
   gem "redcarpet", "~> 2.2.2"
   gem "yard", "~> 0.8.6.1"
+  gem 'minitest'
 end
