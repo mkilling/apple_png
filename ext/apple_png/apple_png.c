@@ -257,7 +257,8 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
         cursor += chunkLength + 12;
 
         int isValidChunkName = 0;
-        for (unsigned int i = 0; i < N_VALID_CHUNK_NAMES; i++) {
+        unsigned int i = 0;
+        for (i = 0; i < N_VALID_CHUNK_NAMES; i++) {
             if (strncmp(chunkType, VALID_CHUNK_NAMES[i], 4) == 0) {
                 isValidChunkName = 1;
                 break;
