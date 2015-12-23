@@ -22,6 +22,10 @@ end
 # before running the tests
 task :test => 'compile'
 
+task :console => 'compile' do
+  exec "irb -r apple_png -I ./lib -I ./ext"
+end
+
 # use 'rake clean' and 'rake clobber' to
 # easily delete generated files
 # CLEAN.include('ext/**/*{.o,.log,.so,.bundle}')
