@@ -318,7 +318,7 @@ static int readPngChunks(VALUE self, const char *oldPNG, size_t oldPngLength, dy
             chunkData = (char*)standardPngCompressedPixelData;
             chunkCRC = png_crc32(chunkType, chunkData, chunkLength);
             tmp_chunkCRC = htonl(chunkCRC);
-            chunkCRC_raw = (char *)(&tmp_chunkCRC);
+            memcpy((void*)chunkCRC_raw, &tmp_chunkCRC, 4);
 
             /* we're done */
             breakLoop = 1;
